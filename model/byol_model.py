@@ -1,6 +1,7 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 import torch
 from .basic_modules import EncoderwithProjection, Predictor
+
 
 class BYOLModel(torch.nn.Module):
     def __init__(self, config):

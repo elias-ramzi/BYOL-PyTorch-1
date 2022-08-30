@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import torch
 
+
 class data_prefetcher():
     def __init__(self, loader):
         self.loader = iter(loader)

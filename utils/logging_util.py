@@ -2,6 +2,7 @@
 import logging
 import sys
 
+
 def get_std_logging():
     logging.basicConfig(
         stream=sys.stdout,

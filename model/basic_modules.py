@@ -1,7 +1,8 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 import torch
 import torch.nn as nn
 from torchvision import models
+
 
 class MLP(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
@@ -18,6 +19,7 @@ class MLP(nn.Module):
         x = self.relu1(x)
         x = self.l2(x)
         return x
+
 
 class EncoderwithProjection(nn.Module):
     def __init__(self, config):
@@ -39,6 +41,7 @@ class EncoderwithProjection(nn.Module):
         x = torch.flatten(x, 1)
         x = self.projetion(x)
         return x
+
 
 class Predictor(nn.Module):
     def __init__(self, config):

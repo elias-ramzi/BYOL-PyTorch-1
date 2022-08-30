@@ -1,4 +1,4 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 import time
 import datetime
 
@@ -8,9 +8,10 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 
 from tensorboardX import SummaryWriter
-import apex
-from apex.parallel import DistributedDataParallel as DDP
-from apex import amp
+# import apex
+# from apex.parallel import DistributedDataParallel as DDP
+# from apex import amp
+from torch.nn.parallel import DistributedDataParallel
 
 from model import BYOLModel
 from optimizer import LARS
@@ -22,8 +23,7 @@ from utils.data_prefetcher import data_prefetcher
 class BYOLTrainer():
     def __init__(self, config):
         self.config = config
-        self.time_stamp = self.config['checkpoint'].get('time_stamp',
-            datetime.datetime.now().strftime('%m%d_%H-%M'))
+        self.time_stamp = self.config['checkpoint'].get('time_stamp', datetime.datetime.now().strftime('%m%d_%H-%M'))
 
         """device parameters"""
         self.world_size = self.config['world_size']
@@ -85,7 +85,7 @@ class BYOLTrainer():
         print("init byol model!")
         net = BYOLModel(self.config)
         if self.sync_bn:
-            net = apex.parallel.convert_syncbn_model(net)
+            net = torch.nn.SyncBatchNorm.convert_sync_batchnorm(net)
         self.model = net.to(self.device)
         print("init byol model end!")
 
@@ -97,15 +97,16 @@ class BYOLTrainer():
         params = params_util.collect_params([self.model.online_network, self.model.predictor],
                                             exclude_bias_and_bn=exclude_bias_and_bn)
         self.optimizer = LARS(params, lr=self.max_lr, momentum=momentum, weight_decay=weight_decay)
+        self.scaler = torch.cuda.amp.GradScaler()
 
         """init amp"""
-        print("amp init!")
-        self.model, self.optimizer = amp.initialize(
-            self.model, self.optimizer, opt_level=self.opt_level)
+        # print("amp init!")
+        # self.model, self.optimizer = amp.initialize(
+        #     self.model, self.optimizer, opt_level=self.opt_level)
 
         if self.distributed:
-            self.model = DDP(self.model, delay_allreduce=True)
-        print("amp init end!")
+            self.model = DistributedDataParallel(self.model, device_ids=[self.gpu], output_device=self.gpu,)
+        # print("amp init end!")
 
     # resume snapshots from pre-train
     def resume_model(self, model_path=None):
@@ -120,19 +121,20 @@ class BYOLTrainer():
             self.steps = checkpoint['steps']
             self.model.load_state_dict(checkpoint['model'], strict=True)
             self.optimizer.load_state_dict(checkpoint['optimizer'])
-            amp.load_state_dict(checkpoint['amp'])
+            self.scaler.load_state_dict(checkpoint['amp'])
             self.logging.info(f"--> Loaded checkpoint '{model_path}' (epoch {self.start_epoch})")
 
     # save snapshots
     def save_checkpoint(self, epoch):
         if epoch % self.save_epoch == 0 and self.rank == 0:
-            state = {'config': self.config,
-                     'epoch': epoch,
-                     'steps': self.steps,
-                     'model': self.model.state_dict(),
-                     'optimizer': self.optimizer.state_dict(),
-                     'amp': amp.state_dict()
-                    }
+            state = {
+                'config': self.config,
+                'epoch': epoch,
+                'steps': self.steps,
+                'model': self.model.state_dict(),
+                'optimizer': self.optimizer.state_dict(),
+                'amp': self.scaler.state_dict()
+            }
             torch.save(state, self.ckpt_path.format(epoch))
 
     def adjust_learning_rate(self, step):
@@ -185,20 +187,21 @@ class BYOLTrainer():
             data_time.update(time.time() - end)
 
             # forward
-            tflag = time.time()
-            q, target_z = self.model(view1, view2, self.mm)
-            forward_time.update(time.time() - tflag)
+            with torch.cuda.amp.autocast():
+                tflag = time.time()
+                q, target_z = self.model(view1, view2, self.mm)
+                forward_time.update(time.time() - tflag)
 
-            tflag = time.time()
-            loss = self.forward_loss(q, target_z)
+                tflag = time.time()
+                loss = self.forward_loss(q, target_z)
 
             self.optimizer.zero_grad()
             if self.opt_level == 'O0':
                 loss.backward()
             else:
-                with amp.scale_loss(loss, self.optimizer) as scaled_loss:
-                    scaled_loss.backward()
-            self.optimizer.step()
+                self.scaler.scale(loss).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
             backward_time.update(time.time() - tflag)
             loss_meter.update(loss.item(), view1.size(0))
 

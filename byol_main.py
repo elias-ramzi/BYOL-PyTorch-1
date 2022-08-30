@@ -1,4 +1,4 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 import os
 from pathlib import Path
 import yaml
@@ -7,6 +7,7 @@ import torch.distributed as dist
 
 from trainer.byol_trainer import BYOLTrainer
 from utils import logging_util
+
 
 def run_task(config):
     logging = logging_util.get_std_logging()
@@ -29,10 +30,12 @@ def run_task(config):
         trainer.train_epoch(epoch, printer=logging.info)
         trainer.save_checkpoint(epoch)
 
+
 def main():
     with open(Path(Path(__file__).parent, 'config/train_config.yaml'), 'r') as f:
         config = yaml.safe_load(f)
     run_task(config)
+
 
 if __name__ == "__main__":
     print(f'Pytorch version: {torch.__version__}')

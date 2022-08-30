@@ -1,7 +1,9 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 import torch
-from torchvision import datasets
+# from torchvision import datasets
 from .byol_transform import MultiViewDataInjector, get_transform
+
+from .sop_dataset import SOPDataset
 
 
 class ImageNetLoader():
@@ -34,14 +36,14 @@ class ImageNetLoader():
         return data_loader
 
     def get_dataset(self, stage):
-        image_dir = self.image_dir + f"imagenet_{'train' if stage in ('train', 'ft') else 'val'}"
+        image_dir = self.image_dir  # + f"imagenet_{'train' if stage in ('train', 'ft') else 'val'}"
         transform1 = get_transform(stage)
         if self.dual_views:
             transform2 = get_transform(stage, gb_prob=0.1, solarize_prob=0.2)
             transform = MultiViewDataInjector([transform1, transform2])
         else:
             transform = transform1
-        dataset = datasets.ImageFolder(image_dir, transform=transform)
+        dataset = SOPDataset(image_dir, 'train' if stage in ('train', 'ft') else 'test', transform=transform)
         return dataset
 
     def set_epoch(self, epoch):

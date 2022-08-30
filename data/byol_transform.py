@@ -1,9 +1,10 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 import torch
 from torchvision import transforms
 import cv2
 from PIL import Image, ImageOps
 import numpy as np
+
 
 class MultiViewDataInjector():
     def __init__(self, transform_list):
@@ -13,6 +14,7 @@ class MultiViewDataInjector():
         output = [transform(sample).unsqueeze(0) for transform in self.transform_list]
         output_cat = torch.cat(output, dim=0)
         return output_cat
+
 
 class GaussianBlur():
     def __init__(self, kernel_size, sigma_min=0.1, sigma_max=2.0):
@@ -25,12 +27,14 @@ class GaussianBlur():
         img = cv2.GaussianBlur(np.array(img), (self.kernel_size, self.kernel_size), sigma)
         return Image.fromarray(img.astype(np.uint8))
 
+
 class Solarize():
     def __init__(self, threshold=128):
         self.threshold = threshold
 
     def __call__(self, sample):
         return ImageOps.solarize(sample, self.threshold)
+
 
 def get_transform(stage, gb_prob=1.0, solarize_prob=0.):
     t_list = []

@@ -1,4 +1,4 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 """
 To use this file, you have to install the latest version of albumentations (>0.4.6) from GitHub:
     pip install -U git+https://github.com/albumentations-team/albumentations
@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+
 
 class MultiViewDataInjectorA():
     def __init__(self, transform_list):
@@ -18,6 +19,7 @@ class MultiViewDataInjectorA():
         output_cat = torch.cat(output, dim=0)
         return output_cat
 
+
 class DataInjectorA():
     def __init__(self, transform):
         self.transform = transform
@@ -26,6 +28,7 @@ class DataInjectorA():
         image = np.array(sample)
         output = self.transform(image=image)['image']
         return output
+
 
 def get_transform(stage, gb_prob=1.0, solarize_prob=0.):
     t_list = []

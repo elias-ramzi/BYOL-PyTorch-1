@@ -1,8 +1,9 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
 """ Layer-wise adaptive rate scaling for SGD in PyTorch! """
 import torch
 from torch.optim.optimizer import Optimizer, required
+
 
 class LARS(Optimizer):
     r"""Implements layer-wise adaptive rate scaling for SGD.
@@ -99,8 +100,7 @@ class LARS(Optimizer):
                 if momentum != 0:
                     param_state = self.state[p]
                     if 'momentum_buffer' not in param_state:
-                        buf = param_state['momentum_buffer'] = \
-                                torch.clone(d_p).detach()
+                        buf = param_state['momentum_buffer'] = torch.clone(d_p).detach()
                     else:
                         buf = param_state['momentum_buffer']
                         buf.mul_(momentum).add_(d_p, alpha=1 - dampening)

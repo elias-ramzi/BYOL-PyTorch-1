@@ -1,6 +1,7 @@
 import torch
 from torchvision import models
 
+
 class ResNet(torch.nn.Module):
     def __init__(self, net_name, pretrained=False, use_fc=False):
         super().__init__()
@@ -17,6 +18,7 @@ class ResNet(torch.nn.Module):
         if self.use_fc:
             x = self.fc(x)
         return x
+
 
 device = torch.device('cpu')
 model = ResNet('resnet50', pretrained=False, use_fc=False).to(device)

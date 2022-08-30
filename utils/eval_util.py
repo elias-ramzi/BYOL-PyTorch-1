@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import torch
 
+
 def accuracy(output, target, topk=(1,)):
     """Computes the precision@k for the specified values of k"""
     with torch.no_grad():
@@ -16,6 +17,7 @@ def accuracy(output, target, topk=(1,)):
             correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
+
 
 class AverageMeter():
     """Computes and stores the average and current value"""
