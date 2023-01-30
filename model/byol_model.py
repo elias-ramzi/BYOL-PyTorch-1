@@ -1,4 +1,5 @@
-# -*- coding:utf-8 -*-
+import copy
+
 import torch
 from .basic_modules import EncoderwithProjection, Predictor
 
@@ -20,9 +21,8 @@ class BYOLModel(torch.nn.Module):
 
     @torch.no_grad()
     def _initializes_target_network(self):
-        for param_q, param_k in zip(self.online_network.parameters(), self.target_network.parameters()):
-            param_k.data.copy_(param_q.data)  # initialize
-            param_k.requires_grad = False     # not update by gradient
+        self.target_network = copy.deepcopy(self.online_network)  # initialize
+        self.target_network.requires_grad_(False)  # not update by gradient
 
     @torch.no_grad()
     def _update_target_network(self, mm):

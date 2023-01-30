@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+import os
 import time
 import datetime
 
@@ -62,6 +63,7 @@ class BYOLTrainer():
         self.save_epoch = self.config['checkpoint']['save_epoch']
         self.ckpt_path = self.config['checkpoint']['ckpt_path'].format(
             self.time_stamp, self.config['model']['backbone']['type'], {})
+        _ = os.makedirs(os.path.dirname(self.ckpt_path), exist_ok=True)
 
         """log tools in the running phase"""
         self.steps = 0

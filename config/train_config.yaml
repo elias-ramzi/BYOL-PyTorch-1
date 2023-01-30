@@ -1,8 +1,8 @@
 model:
-  base_momentum: 0.99
+  base_momentum: 0.996
   backbone:
     type: "resnet50"
-    pretrained: false
+    pretrained: true
   projection:
     type: "MLP"
     input_dim: 2048
@@ -19,17 +19,17 @@ amp:
   opt_level: "O1"
 
 data:
-  image_dir: "/local/DEEPLEARNING/image_retrieval/Stanford_Online_Products/"
+  image_dir: "/local/SSD_DEEPLEARNING_1/image_retrieval/Stanford_Online_Products/"
   resize_size: 224
-  data_workers: 8
-  train_batch_size: 128
+  data_workers: 10
+  train_batch_size: 192
   val_batch_size: 64
   dual_views: true
-  num_examples: 1281167
+  num_examples: 59551
 
 optimizer:
   type: lars
-  base_lr: 0.1
+  base_lr: 0.01
   momentum: 0.9
   weight_decay: 1.0e-6
   total_epochs: 600
@@ -37,9 +37,9 @@ optimizer:
   exclude_bias_and_bn: true
 
 checkpoint:
-  time_stamp: SOP
+  time_stamp: SOP_pre
   resume_path:
-  save_epoch: 1
+  save_epoch: 50
   ckpt_path: "ckpt/byol_imagenet/{}/{}_{}.pth.tar"
 
 log:
